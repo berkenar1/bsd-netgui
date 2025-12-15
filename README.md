@@ -1,19 +1,45 @@
 # BSD Network Manager
 
-A modern, user-friendly network manager GUI for FreeBSD and other BSD systems. Built with Python and wxPython, this tool provides an intuitive interface for managing network interfaces, WiFi connections, DNS settings, and routing tables.
+A modern, user-friendly network manager GUI for FreeBSD and other BSD systems. Built with Python and wxPython, this tool provides an intuitive interface for managing network interfaces, WiFi connections, DNS settings, routing tables, and configuration profiles.
 
 ![BSD Network Manager](docs/screenshot.png)
 *Screenshot placeholder - GUI interface*
 
 ## Features
 
+### Core Network Management
 - **Interface Management**: View and manage all network interfaces (enable/disable, configure IP)
 - **IP Configuration**: Easy setup for both DHCP and static IP addresses
-- **WiFi Management**: Scan, connect, and manage wireless networks
+- **WiFi Management**: Scan, connect, and manage wireless networks with WPA/WPA2/WPA3 support
 - **DNS Configuration**: Add, remove, and manage DNS servers
 - **Routing Table**: View and modify routing tables with an intuitive interface
 - **Real-time Updates**: Live status monitoring of network connections
-- **BSD-Native**: Uses FreeBSD's native networking tools (ifconfig, dhclient, wpa_supplicant, route)
+
+### Enhanced Features (NEW)
+- **Network Profiles**: Save and reuse network configurations with one-click application
+  - Built-in templates for common scenarios (LAN DHCP, Static IP, WiFi, etc.)
+  - Import/export profiles as JSON
+  - Combine rc.conf and wpa_supplicant settings
+  
+- **Network Diagnostics**: Comprehensive troubleshooting tools
+  - Real-time connectivity tests (gateway, external, DNS)
+  - Visual status indicators
+  - Interface, routing, ARP, and connection information
+  - Export diagnostic reports
+  - Built-in help for common network issues
+
+- **Configuration Backup**: Safe configuration management
+  - Automatic backups before changes
+  - ZFS snapshot support (when available)
+  - File-based backup fallback
+  - One-click restore to previous configurations
+  - Backup history with metadata
+
+- **BSD-Native Configuration**: Proper config file management
+  - Parse and modify rc.conf and wpa_supplicant.conf safely
+  - Preserve comments, order, and formatting
+  - Validate changes before applying
+  - Atomic writes for safety
 
 ## Requirements
 
@@ -77,6 +103,12 @@ sudo python -m bsd_netgui.main
 
 4. **Routing**: View and modify routing tables in the "Routing" tab. Add or delete routes as needed.
 
+5. **Network Profiles** (NEW): Create reusable network configurations in the "Profiles" tab. Choose from templates or create custom profiles, then apply them with one click.
+
+6. **Diagnostics** (NEW): Use the "Diagnostics" tab to troubleshoot network issues. Run connectivity tests, view system information, and export diagnostic reports.
+
+7. **Backups** (NEW): Manage configuration backups in the "Backups" tab. View backup history, create manual backups, or restore previous configurations.
+
 ## Development Setup
 
 ### Prerequisites
@@ -112,17 +144,24 @@ sudo venv/bin/python -m bsd_netgui.main
 
 ### Testing
 
-This application requires a FreeBSD or BSD-based system with root access for testing. It's recommended to use a virtual machine (VirtualBox or VMware) with FreeBSD for development and testing.
+This application requires a FreeBSD or BSD-based system with root access for testing network operations. Unit tests can run on any system.
 
-See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for more detailed development information.
+Run unit tests:
+```bash
+python3 -m unittest discover tests
+```
+
+For comprehensive testing information, see [TESTING.md](TESTING.md).
 
 ## Architecture
 
 The application is structured in three main layers:
 
-- **GUI Layer** (`bsd_netgui/gui/`): wxPython-based user interface
-- **Backend Layer** (`bsd_netgui/backend/`): Network management logic and system command execution
-- **Utils Layer** (`bsd_netgui/utils/`): Shared utilities and helpers
+- **GUI Layer** (`bsd_netgui/gui/`): wxPython-based user interface with 7 tabbed panels
+- **Backend Layer** (`bsd_netgui/backend/`): Network management logic, configuration parsers, and system integration
+- **Utils Layer** (`bsd_netgui/utils/`): Shared utilities, validators, and configuration parsers
+
+For detailed architecture documentation, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Contributing
 
