@@ -6,6 +6,9 @@ from .interface_panel import InterfacePanel
 from .wifi_panel import WiFiPanel
 from .dns_panel import DNSPanel
 from .routing_panel import RoutingPanel
+from .profile_panel import ProfilePanel
+from .diagnostics_panel import DiagnosticsPanel
+from .backup_panel import BackupPanel
 from ..backend.network_manager import NetworkManager
 
 
@@ -18,6 +21,9 @@ class MainWindow(wx.Frame):
     - WiFi Management
     - DNS Configuration
     - Routing Table
+    - Network Profiles
+    - Diagnostics
+    - Backups
     """
     
     def __init__(self):
@@ -106,6 +112,15 @@ class MainWindow(wx.Frame):
             self.routing_panel = RoutingPanel(notebook, self.network_manager)
             notebook.AddPage(self.routing_panel, "Routing")
             
+            self.profile_panel = ProfilePanel(notebook, self.network_manager)
+            notebook.AddPage(self.profile_panel, "Profiles")
+            
+            self.diagnostics_panel = DiagnosticsPanel(notebook, self.network_manager)
+            notebook.AddPage(self.diagnostics_panel, "Diagnostics")
+            
+            self.backup_panel = BackupPanel(notebook, self.network_manager)
+            notebook.AddPage(self.backup_panel, "Backups")
+            
         except Exception as e:
             self.logger.error(f"Failed to create panels: {e}")
             wx.MessageBox(
@@ -141,6 +156,9 @@ class MainWindow(wx.Frame):
             self.wifi_panel.refresh()
             self.dns_panel.refresh()
             self.routing_panel.refresh()
+            self.profile_panel.refresh()
+            self.diagnostics_panel.refresh()
+            self.backup_panel.refresh()
         except Exception as e:
             self.logger.error(f"Error refreshing panels: {e}")
             raise
@@ -156,7 +174,10 @@ class MainWindow(wx.Frame):
             "• Interface management (enable/disable, configure IP)\n"
             "• WiFi network scanning and connection\n"
             "• DNS configuration\n"
-            "• Routing table management"
+            "• Routing table management\n"
+            "• Network profile management\n"
+            "• Network diagnostics and troubleshooting\n"
+            "• Configuration backup and restore (with ZFS support)"
         )
         info.SetWebSite("https://github.com/berkenar1/bsd-netgui")
         info.SetLicense("MIT License")
