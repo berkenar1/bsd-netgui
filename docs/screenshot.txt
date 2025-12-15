@@ -1,0 +1,1 @@
+Screenshot placeholder - GUI will be captured when running on FreeBSD
