@@ -194,7 +194,15 @@ class TestBackupHandler(unittest.TestCase):
     
     def test_cleanup_file_backups(self):
         """Test automatic cleanup of old backups."""
-        handler = BackupHandler(self.backup_dir)
+        # Use fresh backup directory
+        import tempfile
+        import time
+        import json
+        from datetime import datetime
+        
+        fresh_backup_dir = tempfile.mkdtemp()
+        
+        handler = BackupHandler(fresh_backup_dir)
         
         # Override CONFIG_FILES
         original_files = handler.CONFIG_FILES
@@ -202,28 +210,44 @@ class TestBackupHandler(unittest.TestCase):
             os.path.join(self.config_dir, 'rc.conf')
         ]
         
-        # Create multiple backups
+        # Manually create 5 backup directories to test cleanup
+        # (bypass _create_file_backup since it calls cleanup automatically)
         backup_ids = []
         for i in range(5):
-            backup_id = handler._create_file_backup(f"Backup {i}")
-            backup_ids.append(backup_id)
-            import time
-            time.sleep(0.1)  # Ensure different timestamps
+            # Use microseconds to ensure uniqueness
+            timestamp = datetime.now().strftime("%Y%m%d-%H%M%S") + f"-{i:03d}"
+            backup_path = Path(fresh_backup_dir) / timestamp
+            backup_path.mkdir(parents=True, exist_ok=False)
+            
+            # Create a dummy file
+            (backup_path / "rc.conf").touch()
+            
+            # Create metadata
+            metadata_path = backup_path / "backup.json"
+            with open(metadata_path, 'w') as f:
+                json.dump({"timestamp": timestamp, "files": ["rc.conf"]}, f)
+            
+            backup_ids.append(timestamp)
+            time.sleep(0.01)  # Small delay
+        
+        # Verify we have 5 backups
+        backups_before = [item.name for item in Path(fresh_backup_dir).iterdir() if item.is_dir()]
+        self.assertEqual(len(backups_before), 5)
         
         # Keep only 2
         handler._cleanup_file_backups(keep=2)
         
         # Check only 2 remain
-        remaining = []
-        for item in Path(self.backup_dir).iterdir():
-            if item.is_dir():
-                remaining.append(item.name)
-        
+        remaining = [item.name for item in Path(fresh_backup_dir).iterdir() if item.is_dir()]
         self.assertEqual(len(remaining), 2)
         
         # Most recent should remain
         self.assertIn(backup_ids[-1], remaining)
         self.assertIn(backup_ids[-2], remaining)
+        
+        # Cleanup
+        import shutil
+        shutil.rmtree(fresh_backup_dir)
         
         handler.CONFIG_FILES = original_files
 

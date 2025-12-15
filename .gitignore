@@ -28,3 +28,17 @@ Thumbs.db
 
 # Project specific
 *.log
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+*.tmp
+*.bak
+
+# Backup directories (for testing)
+/var/backups/bsd-netgui/
+/var/db/bsd-netgui/
+
+# Temporary files
+/tmp/
