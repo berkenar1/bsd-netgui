@@ -294,8 +294,7 @@ class ConnectDialog(wx.Dialog):
         """
         super().__init__(
             parent,
-            title=f"Connect to {ssid}",
-            size=(400, 250)
+            title=f"Connect to {ssid}"
         )
         
         self.ssid = ssid
@@ -361,8 +360,12 @@ class ConnectDialog(wx.Dialog):
         button_sizer.Add(cancel_btn, 0, wx.ALL, 5)
         
         main_sizer.Add(button_sizer, 0, wx.ALIGN_CENTER | wx.ALL, 10)
-        
+
         panel.SetSizer(main_sizer)
+        dialog_sizer = wx.BoxSizer(wx.VERTICAL)
+        dialog_sizer.Add(panel, 1, wx.EXPAND)
+        self.SetSizerAndFit(dialog_sizer)
+        self.Layout()
     
     def on_connect(self, event):
         """Handle connect button."""
