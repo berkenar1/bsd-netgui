@@ -28,6 +28,8 @@ setup(
     entry_points={
         'console_scripts': [
             'bsd-netgui=bsd_netgui.main:main',
+            'bsd-netgui-daemon=bsd_netgui.daemon:main',
+            'bsd-netgui-cli=bsd_netgui.cli:main',
         ],
     },
     classifiers=[
