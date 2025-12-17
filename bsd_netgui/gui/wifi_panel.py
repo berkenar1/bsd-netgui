@@ -24,9 +24,18 @@ class WiFiPanel(wx.Panel):
         self.network_manager = network_manager
         self.logger = logging.getLogger(__name__)
         self.current_iface = None
+        self.scan_timer = None
+        self.scanning = False
         
         self._create_ui()
         self.refresh()
+        
+        # Start auto-scan and perform initial scan immediately
+        self._start_auto_scan()
+        self._perform_scan_silent()
+        
+        # Cleanup when panel is destroyed
+        self.Bind(wx.EVT_WINDOW_DESTROY, self._on_destroy)
     
     def _create_ui(self):
         """Create the user interface."""
@@ -90,6 +99,50 @@ class WiFiPanel(wx.Panel):
         main_sizer.Add(button_sizer, 0, wx.ALIGN_CENTER)
         
         self.SetSizer(main_sizer)
+    
+    def _start_auto_scan(self):
+        """Start the automatic WiFi scan timer (every 30 seconds)."""
+        if self.scan_timer is None:
+            self.scan_timer = wx.Timer(self)
+            self.Bind(wx.EVT_TIMER, self._on_auto_scan_timer, self.scan_timer)
+            self.scan_timer.Start(30000)  # 30 seconds in milliseconds
+            self.logger.info("Auto-scan timer started")
+    
+    def _stop_auto_scan(self):
+        """Stop the automatic WiFi scan timer."""
+        if self.scan_timer is not None:
+            self.scan_timer.Stop()
+            self.logger.info("Auto-scan timer stopped")
+    
+    def _on_auto_scan_timer(self, event):
+        """Handle automatic scan timer event."""
+        if self.current_iface and not self.scanning:
+            self.logger.debug("Auto-scan triggered")
+            self._perform_scan_silent()
+    
+    def _perform_scan_silent(self):
+        """Perform a scan without showing progress dialog."""
+        if not self.current_iface or self.scanning:
+            return
+        
+        self.scanning = True
+        
+        def scan_thread():
+            try:
+                networks = self.network_manager.scan_networks(self.current_iface)
+                wx.CallAfter(self._display_scan_results, networks, None)
+            except Exception as e:
+                self.logger.error(f"Auto-scan error: {e}")
+            finally:
+                self.scanning = False
+        
+        thread = threading.Thread(target=scan_thread)
+        thread.daemon = True
+        thread.start()
+    
+    def _on_destroy(self, event):
+        """Handle panel destruction."""
+        self._stop_auto_scan()
     
     def refresh(self):
         """Refresh WiFi interfaces and status."""
@@ -191,7 +244,8 @@ class WiFiPanel(wx.Panel):
     
     def _display_scan_results(self, networks, progress):
         """Display scan results in the list."""
-        progress.Destroy()
+        if progress is not None:
+            progress.Destroy()
         
         self.network_list.DeleteAllItems()
         

@@ -1,0 +1,112 @@
+#!/bin/sh
+#
+# PROVIDE: bsd-netgui
+# REQUIRE: NETWORKING
+# KEYWORD: shutdown
+#
+# Add the following lines to /etc/rc.conf to enable bsd-netgui:
+#
+# bsd_netgui_enable="YES"
+# bsd_netgui_user="root"
+# bsd_netgui_pidfile="/var/run/bsd-netgui.pid"
+#
+
+. /etc/rc.subr
+
+name="bsd_netgui"
+rcvar=bsd_netgui_enable
+pidfile="${bsd_netgui_pidfile:-/var/run/bsd-netgui.pid}"
+logfile="${bsd_netgui_logfile:-/var/log/bsd-netgui.log}"
+user="${bsd_netgui_user:-root}"
+python_path="${bsd_netgui_python_path:-/usr/local/bin/python3}"
+install_path="${bsd_netgui_install_path:-/usr/local}"
+
+load_rc_config $name
+: ${bsd_netgui_enable:=NO}
+
+command="/usr/sbin/daemon"
+command_args="-P ${pidfile} -u ${user} ${python_path} -m bsd_netgui.main >> ${logfile} 2>&1"
+
+start_cmd="bsd_netgui_start"
+stop_cmd="bsd_netgui_stop"
+restart_cmd="bsd_netgui_restart"
+status_cmd="bsd_netgui_status"
+
+bsd_netgui_start()
+{
+	echo "Starting ${name}..."
+	if [ -f "${pidfile}" ]; then
+		echo "${name} is already running (PID: $(cat ${pidfile}))"
+		return 1
+	fi
+	
+	# Create log directory if it doesn't exist
+	mkdir -p "$(dirname ${logfile})"
+	
+	# Start the daemon
+	${command} ${command_args}
+	
+	# Give it a moment to start
+	sleep 1
+	
+	if [ -f "${pidfile}" ]; then
+		echo "${name} started successfully (PID: $(cat ${pidfile}))"
+	else
+		echo "Failed to start ${name}"
+		return 1
+	fi
+}
+
+bsd_netgui_stop()
+{
+	echo "Stopping ${name}..."
+	if [ -f "${pidfile}" ]; then
+		pid=$(cat "${pidfile}")
+		kill -TERM ${pid} 2>/dev/null
+		
+		# Wait for process to terminate
+		count=0
+		while kill -0 ${pid} 2>/dev/null && [ ${count} -lt 30 ]; do
+			sleep 0.5
+			count=$((count + 1))
+		done
+		
+		# Force kill if still running
+		if kill -0 ${pid} 2>/dev/null; then
+			echo "Force killing ${name}..."
+			kill -KILL ${pid} 2>/dev/null
+		fi
+		
+		rm -f "${pidfile}"
+		echo "${name} stopped"
+	else
+		echo "${name} is not running"
+		return 1
+	fi
+}
+
+bsd_netgui_restart()
+{
+	bsd_netgui_stop
+	sleep 1
+	bsd_netgui_start
+}
+
+bsd_netgui_status()
+{
+	if [ -f "${pidfile}" ]; then
+		pid=$(cat "${pidfile}")
+		if kill -0 ${pid} 2>/dev/null; then
+			echo "${name} is running (PID: ${pid})"
+			return 0
+		else
+			echo "${name} PID file exists but process is not running"
+			return 1
+		fi
+	else
+		echo "${name} is not running"
+		return 1
+	fi
+}
+
+run_rc_command "$1"
